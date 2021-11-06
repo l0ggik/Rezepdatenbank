@@ -2,6 +2,22 @@ import sqlite3
 import tkinter as tk
 
 
+def main():
+    conn = sqlite3.connect('rezepte.db')
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS rezepte "
+                   "(Rezept_ID INTEGER NOT NULL PRIMARY KEY, "
+                   "Rezept_Name text, Rezept_Beschreibung text, Rezept_Bild text)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS zutaten "
+                   "(Zutat_ID INTEGER NOT NULL PRIMARY KEY, "
+                   "Zutat_Name text, Zutat_Menge real, Zutat_Einheit text, Rezept_ID int)")
+    conn.commit()
+    conn.close()
+    gui_root = tk.Tk()
+    init_app = GuiWindow(master=gui_root)
+    init_app.mainloop()
+    
+
 class GuiWindow(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
@@ -250,7 +266,6 @@ class UnitOptionMenue(tk.OptionMenu):
     def grid_self(self):
         pass
 
-
-gui_root = tk.Tk()
-init_app = GuiWindow(master=gui_root)
-init_app.mainloop()
+    
+if __name__=='__main__':
+    main()
