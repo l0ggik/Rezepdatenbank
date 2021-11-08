@@ -1,18 +1,10 @@
 import sqlite3
 import tkinter as tk
+import database_connection
 
 
 def main():
-    conn = sqlite3.connect('rezepte.db')
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS rezepte "
-                   "(Rezept_ID INTEGER NOT NULL PRIMARY KEY, "
-                   "Rezept_Name text, Rezept_Beschreibung text, Rezept_Bild text)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS zutaten "
-                   "(Zutat_ID INTEGER NOT NULL PRIMARY KEY, "
-                   "Zutat_Name text, Zutat_Menge real, Zutat_Einheit text, Rezept_ID int)")
-    conn.commit()
-    conn.close()
+    database_connection.init_database()
     gui_root = tk.Tk()
     init_app = GuiWindow(master=gui_root)
     init_app.mainloop()
@@ -132,7 +124,6 @@ class CreateRecipeGui(tk.Frame):
             self.component_amount = self.component_amount_textfield_list[count].get("1.0", "end")
             self.component_unit = self.units_optionmenue_list[count].stringvar.get()
             if self.component_name:
-                print("Starte create component")
                 self.create_component()
 
     def push_add_components_to_gui_button(self):
@@ -233,6 +224,11 @@ class FindRecipeGui(tk.Frame):
         self.find_recipe_button.grid(column=1, row=3)
 
     def click_find_recipe_button(self):
+        test = database_connection.read_from_database("SELECT Rezept_Name, "
+                                               "Rezept_Beschreibung "
+                                               "FROM rezepte "
+                                               "WHERE Rezept_Name LIKE ?",
+                                               self.recipe_name_text.get("1.0", "end").strip())
         self.master.destroy()
         root = tk.Tk()
         show_recipe_gui = ShowRecipeGui(master=root)
@@ -243,15 +239,21 @@ class ShowRecipeGui(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.recipe_text = tk.Label(height=30, width=60)
-        self.quit_button = tk.Button(text='Verlassen')
-        #load_Data_from_Database
+        self.quit_button = tk.Button(text='Verlassen', command=self.push_quit_button)
+        self.load_recipe()
         #show_data_in_textfield
         self.recipe_text.grid()
         self.quit_button.grid()
 
-    def push_quit_button(self):
+    def find_recipe(self):
         pass
-        #ToDo: quit program
+
+    def load_recipe(self):
+        test = database_connection.read_from_database('SELECT * FROM rezepte')
+        print(test)
+
+    def push_quit_button(self):
+        self.master.destroy()
 
 
 class UnitOptionMenue(tk.OptionMenu):
