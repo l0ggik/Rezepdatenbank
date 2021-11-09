@@ -1,5 +1,6 @@
 import sqlite3
 import tkinter as tk
+from tkinter import messagebox
 import database_connection
 
 
@@ -224,30 +225,35 @@ class FindRecipeGui(tk.Frame):
         self.find_recipe_button.grid(column=1, row=3)
 
     def click_find_recipe_button(self):
-        self.recipe_text = database_connection.read_from_database("SELECT Rezept_Name, "
-                                               "Rezept_Beschreibung "
-                                               "FROM rezepte "
-                                               "WHERE Rezept_Name LIKE ?",
-                                               self.recipe_name_text.get("1.0", "end").strip())
-        self_components = database_connection.read_from_database(query string for component loading)
-        if recipe_text:
-            create new gui window
+        recipe_list = database_connection.read_from_database("SELECT Rezept_ID,"
+                                                             "Rezept_Name, "
+                                                             "Rezept_Beschreibung "
+                                                             "FROM rezepte "
+                                                             "WHERE Rezept_Name LIKE ?",
+                                                             self.recipe_name_text.get("1.0", "end").strip())
+        if recipe_list:
+            self.master.destroy()
+            root = tk.Tk()
+            show_recipe_gui = ShowRecipeGui(recipe_list, master=root)
+            show_recipe_gui.mainloop()
         else:
-            create error message
-        self.master.destroy()
-        root = tk.Tk()
-        show_recipe_gui = ShowRecipeGui(master=root) #ToDo: hand over recipe_text and components
-        show_recipe_gui.mainloop()
+            messagebox.showerror(title='Rezept nicht gefunden',
+                                         message='Das ausgewählte Rezept konnte nicht gefunden werden')
 
 
 class ShowRecipeGui(tk.Frame):
-    def __init__(self, master=None):
+    def __init__(self, recipe_list=None, master=None):
         super().__init__(master)
+        self.recipe_name_label = tk.Label(height=1, width=60)
         self.recipe_text = tk.Label(height=30, width=60)
-        get loaded recipe and components into textfield
+        self.recipe_list = recipe_list
+        self.recipe_name_label.config(text=recipe_list[0][1])
+        self.recipe_text.config(text=recipe_list[0][2])
+        #ToDo: Zutaten laden
         self.quit_button = tk.Button(text='Verlassen', command=self.push_quit_button)
         self.load_recipe()
         #show_data_in_textfield
+        self.recipe_name_label.grid()
         self.recipe_text.grid()
         self.quit_button.grid()
 
