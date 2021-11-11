@@ -133,3 +133,6 @@ rezepte.db
 
 #Tests
 test.py
+
+#Pycharm
+.idea/
