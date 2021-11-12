@@ -245,60 +245,61 @@ class ShowRecipeGui(tk.Frame):
     def __init__(self, recipe_list=None, master=None):
         super().__init__(master)
         self.recipe_list = recipe_list
-        component_list = database_connection.read_from_database("SELECT * "
-                                                                "FROM zutaten "
-                                                                "WHERE Rezept_ID = ?",
-                                                                self.recipe_list[0][0])
-        components_string = ''
-        for component in component_list:
-            components_string = components_string \
-                                + str(int(component[2])) \
-                                + ' ' + component[3] \
-                                + ' ' + component[1] + '\n'
+        self.recipe_position = 0
+        self.component_list = []
+
         self.recipe_name_label = tk.Label(height=1, width=60)
         self.recipe_text_label = tk.Label(height=30, width=60)
-        self.recipe_components_label = tk.Label(height=30, width=60, text=components_string)
-        self.recipe_name_label.config(text=recipe_list[0][1])
-        self.recipe_text_label.config(text=recipe_list[0][2])
+        self.recipe_components_label = tk.Label(height=30, width=60)
         self.next_recipe_button = tk.Button(text='nächstes Rezept', command=self.push_next_recipe_button)
-        self.previuos_recipe_button = tk.Button(text='vorheriges Rezept', command=self.push_previous_recipe_button)
+        self.previous_recipe_button = tk.Button(text='vorheriges Rezept', command=self.push_previous_recipe_button)
         self.quit_button = tk.Button(text='Verlassen', command=self.push_quit_button)
 
-        if actual_position == 0:
-            make previous_recipe_button greyed out and not usable
-        elif actual_position == len recipe_list:
-            make previous_recipe_button greyed out and not usable
-        self.load_recipe()
-        #show_data_in_textfield
-        self.recipe_name_label.grid()
-        self.recipe_text_label.grid()
-        self.recipe_components_label.grid()
-        self.quit_button.grid()
+        self.update_components()
 
     def push_next_recipe_button(self):
-        pass
-        self.actual_recipe = recipe[actual_position + 1]
-        actual position + 1
-        self.recipe_component_list = get_components_from_database
+        self.recipe_position += 1
         self.update_components()
-        self.grideverything
 
     def push_previous_recipe_button(self):
-        pass
-        self.actual_recipe = recipe[actual_position - 1]
-        actual position - 1
-        self.recipe_component_list = get_components_from_database
-        self.updatecomponents
-        self.creategui()
+        self.recipe_position -= 1
+        self.update_components()
 
     def push_quit_button(self):
         self.master.destroy()
 
     def grid_components(self):
-        grid everything
+        self.recipe_name_label.grid()
+        self.recipe_text_label.grid()
+        self.recipe_components_label.grid()
+        self.quit_button.grid()
+        self.next_recipe_button.grid()
+        self.previous_recipe_button.grid()
 
     def update_components(self):
-        update components
+        self.component_list = database_connection.read_from_database("SELECT * "
+                                                                     "FROM zutaten "
+                                                                     "WHERE Rezept_ID = ?",
+                                                                     self.recipe_list[self.recipe_position][0])
+        components_string = ''
+        for component in self.component_list:
+            components_string = components_string \
+                                + str(int(component[2])) \
+                                + ' ' + component[3] \
+                                + ' ' + component[1] + '\n'
+        self.recipe_components_label.config(text=components_string)
+        self.recipe_name_label.config(text=self.recipe_list[self.recipe_position][1])
+        self.recipe_text_label.config(text=self.recipe_list[self.recipe_position][2])
+        if self.recipe_position == 0:
+            self.previous_recipe_button.config(state='disabled')
+            if len(self.recipe_list <= 1):
+                self.next_recipe_button.config(state='disabled')
+            else:
+                self.next_recipe_button.config(state='normal')
+        elif self.recipe_position >= len(self.recipe_list-1):
+            self.next_recipe_button.config(state='disabled')
+            self.previous_recipe_button.config(state='normal')
+        self.grid_components()
 
 
 class UnitOptionMenue(tk.OptionMenu):
