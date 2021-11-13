@@ -1,18 +1,11 @@
 import sqlite3
 import tkinter as tk
+from tkinter import messagebox
+import database_connection
 
 
 def main():
-    conn = sqlite3.connect('rezepte.db')
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS rezepte "
-                   "(Rezept_ID INTEGER NOT NULL PRIMARY KEY, "
-                   "Rezept_Name text, Rezept_Beschreibung text, Rezept_Bild text)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS zutaten "
-                   "(Zutat_ID INTEGER NOT NULL PRIMARY KEY, "
-                   "Zutat_Name text, Zutat_Menge real, Zutat_Einheit text, Rezept_ID int)")
-    conn.commit()
-    conn.close()
+    database_connection.init_database()
     gui_root = tk.Tk()
     init_app = GuiWindow(master=gui_root)
     init_app.mainloop()
@@ -132,7 +125,6 @@ class CreateRecipeGui(tk.Frame):
             self.component_amount = self.component_amount_textfield_list[count].get("1.0", "end")
             self.component_unit = self.units_optionmenue_list[count].stringvar.get()
             if self.component_name:
-                print("Starte create component")
                 self.create_component()
 
     def push_add_components_to_gui_button(self):
@@ -233,25 +225,81 @@ class FindRecipeGui(tk.Frame):
         self.find_recipe_button.grid(column=1, row=3)
 
     def click_find_recipe_button(self):
-        self.master.destroy()
-        root = tk.Tk()
-        show_recipe_gui = ShowRecipeGui(master=root)
-        show_recipe_gui.mainloop()
+        recipe_list = database_connection.read_from_database("SELECT Rezept_ID,"
+                                                             "Rezept_Name, "
+                                                             "Rezept_Beschreibung "
+                                                             "FROM rezepte "
+                                                             "WHERE Rezept_Name LIKE ?",
+                                                             self.recipe_name_text.get("1.0", "end").strip())
+        if recipe_list:
+            self.master.destroy()
+            root = tk.Tk()
+            show_recipe_gui = ShowRecipeGui(recipe_list, master=root)
+            show_recipe_gui.mainloop()
+        else:
+            messagebox.showerror(title='Rezept nicht gefunden',
+                                         message='Das ausgewählte Rezept konnte nicht gefunden werden')
 
 
 class ShowRecipeGui(tk.Frame):
-    def __init__(self, master=None):
+    def __init__(self, recipe_list=None, master=None):
         super().__init__(master)
-        self.recipe_text = tk.Label(height=30, width=60)
-        self.quit_button = tk.Button(text='Verlassen')
-        #load_Data_from_Database
-        #show_data_in_textfield
-        self.recipe_text.grid()
-        self.quit_button.grid()
+        self.recipe_list = recipe_list
+        self.recipe_position = 0
+        self.component_list = []
+
+        self.recipe_name_label = tk.Label(height=1, width=60)
+        self.recipe_text_label = tk.Label(height=30, width=60)
+        self.recipe_components_label = tk.Label()
+        self.next_recipe_button = tk.Button(text='nächstes Rezept', command=self.push_next_recipe_button)
+        self.previous_recipe_button = tk.Button(text='vorheriges Rezept', command=self.push_previous_recipe_button)
+        self.quit_button = tk.Button(text='Verlassen', command=self.push_quit_button)
+
+        self.update_components()
+
+    def push_next_recipe_button(self):
+        self.recipe_position += 1
+        self.update_components()
+
+    def push_previous_recipe_button(self):
+        self.recipe_position -= 1
+        self.update_components()
 
     def push_quit_button(self):
-        pass
-        #ToDo: quit program
+        self.master.destroy()
+
+    def grid_components(self):
+        self.recipe_name_label.grid(columnspan=3, column=1)
+        self.recipe_text_label.grid(columnspan=3, column=1)
+        self.recipe_components_label.grid(columnspan=3, column=1)
+        self.quit_button.grid(row=4, column=1)
+        self.next_recipe_button.grid(row=4, column=2)
+        self.previous_recipe_button.grid(row=4, column=3)
+
+    def update_components(self):
+        self.component_list = database_connection.read_from_database("SELECT * "
+                                                                     "FROM zutaten "
+                                                                     "WHERE Rezept_ID = ?",
+                                                                     self.recipe_list[self.recipe_position][0])
+        components_string = ''
+        for component in self.component_list:
+            components_string = components_string \
+                                + str(int(component[2])) \
+                                + ' ' + component[3] \
+                                + ' ' + component[1] + '\n'
+        self.recipe_components_label.config(height=len(self.component_list) + 1, width=60, text=components_string)
+        self.recipe_name_label.config(text=self.recipe_list[self.recipe_position][1])
+        self.recipe_text_label.config(text=self.recipe_list[self.recipe_position][2])
+        if self.recipe_position == 0:
+            self.previous_recipe_button.config(state='disabled')
+            if len(self.recipe_list) <= 1:
+                self.next_recipe_button.config(state='disabled')
+            else:
+                self.next_recipe_button.config(state='normal')
+        elif self.recipe_position >= len(self.recipe_list-1):
+            self.next_recipe_button.config(state='disabled')
+            self.previous_recipe_button.config(state='normal')
+        self.grid_components()
 
 
 class UnitOptionMenue(tk.OptionMenu):

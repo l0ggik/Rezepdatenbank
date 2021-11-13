@@ -130,3 +130,9 @@ dmypy.json
 
 #Database
 rezepte.db
+
+#Tests
+test.py
+
+#Pycharm
+.idea/
