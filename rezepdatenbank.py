@@ -250,7 +250,7 @@ class ShowRecipeGui(tk.Frame):
 
         self.recipe_name_label = tk.Label(height=1, width=60)
         self.recipe_text_label = tk.Label(height=30, width=60)
-        self.recipe_components_label = tk.Label(height=30, width=60)
+        self.recipe_components_label = tk.Label()
         self.next_recipe_button = tk.Button(text='nächstes Rezept', command=self.push_next_recipe_button)
         self.previous_recipe_button = tk.Button(text='vorheriges Rezept', command=self.push_previous_recipe_button)
         self.quit_button = tk.Button(text='Verlassen', command=self.push_quit_button)
@@ -269,12 +269,12 @@ class ShowRecipeGui(tk.Frame):
         self.master.destroy()
 
     def grid_components(self):
-        self.recipe_name_label.grid()
-        self.recipe_text_label.grid()
-        self.recipe_components_label.grid()
-        self.quit_button.grid()
-        self.next_recipe_button.grid()
-        self.previous_recipe_button.grid()
+        self.recipe_name_label.grid(columnspan=3, column=1)
+        self.recipe_text_label.grid(columnspan=3, column=1)
+        self.recipe_components_label.grid(columnspan=3, column=1)
+        self.quit_button.grid(row=4, column=1)
+        self.next_recipe_button.grid(row=4, column=2)
+        self.previous_recipe_button.grid(row=4, column=3)
 
     def update_components(self):
         self.component_list = database_connection.read_from_database("SELECT * "
@@ -287,12 +287,12 @@ class ShowRecipeGui(tk.Frame):
                                 + str(int(component[2])) \
                                 + ' ' + component[3] \
                                 + ' ' + component[1] + '\n'
-        self.recipe_components_label.config(text=components_string)
+        self.recipe_components_label.config(height=len(self.component_list) + 1, width=60, text=components_string)
         self.recipe_name_label.config(text=self.recipe_list[self.recipe_position][1])
         self.recipe_text_label.config(text=self.recipe_list[self.recipe_position][2])
         if self.recipe_position == 0:
             self.previous_recipe_button.config(state='disabled')
-            if len(self.recipe_list <= 1):
+            if len(self.recipe_list) <= 1:
                 self.next_recipe_button.config(state='disabled')
             else:
                 self.next_recipe_button.config(state='normal')
